@@ -63,7 +63,7 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			for i := 0; i < 1; i++ {
+			for i := 0; i < 5; i++ {
 				go func() {
 					for {
 						if err := Start(session); err != nil {
@@ -99,8 +99,11 @@ func NewRootCommand() *cobra.Command {
 						return
 					}
 					ins := notice.NewBark(opt.BarkKey)
-					if err := ins.Send("抢菜成功", "叮咚买菜 抢菜成功，请尽快支付！"); err != nil {
-						logrus.Warningf("Bark消息通知失败: %v", err)
+					for i := 0; i < 120; i++ {
+						if err := ins.Send("抢菜成功", "叮咚买菜 抢菜成功，请尽快支付！"); err != nil {
+							logrus.Warningf("Bark消息通知失败: %v", err)
+						}
+						time.Sleep(2 * time.Second)
 					}
 				}()
 
@@ -118,7 +121,7 @@ func NewRootCommand() *cobra.Command {
 	//barkKeyEnv := os.Getenv("DDSHOP_BARKKEY")
 	cmd.Flags().StringVar(&opt.Cookie, "cookie", "", "设置用户个人cookie")
 	cmd.Flags().StringVar(&opt.BarkKey, "bark-key", "", "设置bark的通知key")
-	cmd.Flags().Int64Var(&opt.Interval, "interval", 2000, "设置请求间隔时间(ms)，默认为100")
+	cmd.Flags().Int64Var(&opt.Interval, "interval", 45, "设置请求间隔时间(ms)，默认为100")
 	return cmd
 }
 
