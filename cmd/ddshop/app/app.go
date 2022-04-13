@@ -74,7 +74,7 @@ func NewRootCommand() *cobra.Command {
 								errCh <- err
 								return
 							case core.ErrorNoReserveTime:
-								sleepInterval := 3 + rand.Intn(6)
+								sleepInterval := 60 + rand.Intn(500)
 								logrus.Warningf("暂无可预约的时间，%d 秒后重试！", sleepInterval)
 								time.Sleep(time.Duration(sleepInterval) * time.Second)
 							default:
