@@ -75,15 +75,19 @@ func (s *Session) GeneratePackageOrder() {
 	products := make([]map[string]interface{}, 0, len(s.Order.Products))
 	for _, product := range s.Order.Products {
 		prod := map[string]interface{}{
-			"id":           product.Id,
-			"cart_id":      product.CartId,
-			"count":        product.Count,
-			"price":        product.Price,
-			"product_type": product.ProductType,
-			"is_booking":   product.IsBooking,
-			"product_name": product.ProductName,
-			"small_image":  product.SmallImage,
-			"sizes":        product.Sizes,
+			"id":                   product.Id,
+			"cart_id":              product.CartId,
+			"count":                product.Count,
+			"price":                product.Price,
+			"product_type":         product.ProductType,
+			"is_booking":           product.IsBooking,
+			"product_name":         product.ProductName,
+			"small_image":          product.SmallImage,
+			"sizes":                product.Sizes,
+			"total_money":          product.TotalPrice,
+			"total_origin_money":   product.OriginPrice,
+			"instant_rebate_money": "0.00",
+			"origin_price":         product.OriginPrice,
 		}
 		products = append(products, prod)
 	}

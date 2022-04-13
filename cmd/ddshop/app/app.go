@@ -159,23 +159,21 @@ func Start(session *core.Session) error {
 		//logrus.Infof("发现可用的配送时段!")
 
 		var wg errgroup.Group
-		for _, reserveTime := range multiReserveTime {
-			sess := session.Clone()
-			sess.UpdatePackageOrder(reserveTime)
-			wg.Go(func() error {
-				startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
-				endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
-				timeRange := startTime + "——" + endTime
-				logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
-				if err := sess.CreateOrder(context.Background()); err != nil {
-					logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
-					return err
-				}
+		sess := session.Clone()
+		sess.UpdatePackageOrder(multiReserveTime[len(multiReserveTime)-1])
+		wg.Go(func() error {
+			startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
+			endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
+			timeRange := startTime + "——" + endTime
+			logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
+			if err := sess.CreateOrder(context.Background()); err != nil {
+				logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
+				return err
+			}
 
-				successCh <- struct{}{}
-				return nil
-			})
-		}
+			successCh <- struct{}{}
+			return nil
+		})
 		_ = wg.Wait()
 		return nil
 	}

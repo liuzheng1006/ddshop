@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -200,16 +199,16 @@ func (s *Session) chooseAddr() error {
 		addrs = append(addrs, k)
 	}
 
-	var addr string
-	sv := &survey.Select{
-		Message: "请选择收货地址",
-		Options: addrs,
-	}
-	if err := survey.AskOne(sv, &addr); err != nil {
-		return fmt.Errorf("选择收货地址错误: %v", err)
-	}
+	//var addr string
+	//sv := &survey.Select{
+	//	Message: "请选择收货地址",
+	//	Options: addrs,
+	//}
+	//if err := survey.AskOne(sv, &addr); err != nil {
+	//	return fmt.Errorf("选择收货地址错误: %v", err)
+	//}
 
-	address, ok := addrMap[addr]
+	address, ok := addrMap[addrs[0]]
 	if !ok {
 		return errors.New("请选择正确的收货地址")
 	}
@@ -224,24 +223,25 @@ const (
 )
 
 func (s *Session) choosePay() error {
-	var payName string
-	sv := &survey.Select{
-		Message: "请选择支付方式",
-		Options: []string{paymentWechat, paymentAlipay},
-		Default: paymentWechat,
-	}
-	if err := survey.AskOne(sv, &payName); err != nil {
-		return fmt.Errorf("选择支付方式错误: %v", err)
-	}
-
-	switch payName {
-	case paymentAlipay:
-		s.PayType = 2
-	case paymentWechat:
-		s.PayType = 4
-	default:
-		return fmt.Errorf("无法识别的支付方式: %s", payName)
-	}
+	//var payName string
+	//sv := &survey.Select{
+	//	Message: "请选择支付方式",
+	//	Options: []string{paymentWechat, paymentAlipay},
+	//	Default: paymentWechat,
+	//}
+	//if err := survey.AskOne(sv, &payName); err != nil {
+	//	return fmt.Errorf("选择支付方式错误: %v", err)
+	//}
+	//
+	//switch payName {
+	//case paymentAlipay:
+	//	s.PayType = 2
+	//case paymentWechat:
+	//	s.PayType = 4
+	//default:
+	//	return fmt.Errorf("无法识别的支付方式: %s", payName)
+	//}
+	s.PayType = 4
 	return nil
 }
 
@@ -251,23 +251,24 @@ const (
 )
 
 func (s *Session) chooseCartMode() error {
-	var cartDesc string
-	sv := &survey.Select{
-		Message: "请选择购物车商品结算模式",
-		Options: []string{cartModeAvailable, cartModeAll},
-		Default: cartModeAvailable,
-	}
-	if err := survey.AskOne(sv, &cartDesc); err != nil {
-		return fmt.Errorf("选择购物车商品结算模式错误: %v", err)
-	}
-
-	switch cartDesc {
-	case cartModeAvailable:
-		s.CartMode = 1
-	case cartModeAll:
-		s.CartMode = 2
-	default:
-		return fmt.Errorf("无法识别的购物车商品结算模式: %s", cartDesc)
-	}
+	//var cartDesc string
+	//sv := &survey.Select{
+	//	Message: "请选择购物车商品结算模式",
+	//	Options: []string{cartModeAvailable, cartModeAll},
+	//	Default: cartModeAvailable,
+	//}
+	//if err := survey.AskOne(sv, &cartDesc); err != nil {
+	//	return fmt.Errorf("选择购物车商品结算模式错误: %v", err)
+	//}
+	//
+	//switch cartDesc {
+	//case cartModeAvailable:
+	//	s.CartMode = 1
+	//case cartModeAll:
+	//	s.CartMode = 2
+	//default:
+	//	return fmt.Errorf("无法识别的购物车商品结算模式: %s", cartDesc)
+	//}
+	s.CartMode = 2
 	return nil
 }
