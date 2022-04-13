@@ -84,7 +84,7 @@ func NewRootCommand() *cobra.Command {
 						time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 					}
 				}()
-				time.Sleep(time.Duration(rand.Int63n(50)) * time.Millisecond)
+				time.Sleep(time.Duration(83+rand.Int63n(57)) * time.Millisecond)
 			}
 
 			select {
