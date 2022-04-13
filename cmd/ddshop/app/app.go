@@ -78,11 +78,10 @@ func NewRootCommand() *cobra.Command {
 								time.Sleep(time.Duration(sleepInterval) * time.Second)
 							default:
 								logrus.Error(err)
-								time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 							}
 							fmt.Println()
 						}
-						time.Sleep(time.Duration(rand.Int63n(20)) * time.Millisecond)
+						time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 					}
 				}()
 				time.Sleep(time.Duration(rand.Int63n(50)) * time.Millisecond)
