@@ -69,8 +69,9 @@ func NewRootCommand() *cobra.Command {
 						if err := Start(session); err != nil {
 							switch err {
 							case core.ErrorNoValidProduct:
-								logrus.Error("购物车中无有效商品，请先前往app添加或勾选！")
-								//errCh <- err
+								logrus.Errorf("购物车中无有效商品，%d 秒后退出！", 10)
+								time.Sleep(10 * time.Second)
+								errCh <- err
 								return
 							case core.ErrorNoReserveTime:
 								sleepInterval := 3 + rand.Intn(6)
@@ -79,7 +80,7 @@ func NewRootCommand() *cobra.Command {
 							default:
 								logrus.Error(err)
 							}
-							fmt.Println()
+							//fmt.Println()
 						}
 						time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 					}
