@@ -44,13 +44,14 @@ type Package struct {
 type PaymentOrder struct {
 	ReservedTimeStart    int    `json:"reserved_time_start"`
 	ReservedTimeEnd      int    `json:"reserved_time_end"`
-	FreightDiscountMoney string `json:"freight_discount_money"` // 运费折扣费用
-	FreightMoney         string `json:"freight_money"`          // 运费
-	OrderFreight         string `json:"order_freight"`          // 订单运费
+	FreightDiscountMoney string `json:"freight_discount_money"`
+	FreightMoney         string `json:"freight_money"`
+	OrderFreight         string `json:"order_freight"`
 	AddressId            string `json:"address_id"`
+	UsedPointNum         int    `json:"used_point_num"`
 	ParentOrderSign      string `json:"parent_order_sign"`
-	PayType              int    `json:"pay_type"` // 2支付宝，4微信，6小程序支付
-	ProductType          int    `json:"product_type"`
+	PayType              int    `json:"pay_type"`
+	OrderType            int    `json:"order_type"`
 	IsUseBalance         int    `json:"is_use_balance"`
 	ReceiptWithoutSku    string `json:"receipt_without_sku"`
 	Price                string `json:"price"`
@@ -72,47 +73,48 @@ type AddNewOrderReturnData struct {
 }
 
 func (s *Session) GeneratePackageOrder() {
-	products := make([]map[string]interface{}, 0, len(s.Order.Products))
+	var products []map[string]interface{}
 	for _, product := range s.Order.Products {
 		prod := map[string]interface{}{
 			"id":                   product.Id,
-			"cart_id":              product.CartId,
-			"count":                product.Count,
-			"price":                product.Price,
-			"product_type":         product.ProductType,
-			"is_booking":           product.IsBooking,
-			"product_name":         product.ProductName,
-			"small_image":          product.SmallImage,
-			"sizes":                product.Sizes,
 			"total_money":          product.TotalPrice,
 			"total_origin_money":   product.OriginPrice,
+			"count":                product.Count,
+			"price":                product.Price,
 			"instant_rebate_money": "0.00",
 			"origin_price":         product.OriginPrice,
+			"sizes":                product.Sizes,
 		}
 		products = append(products, prod)
 	}
-	s.PackageOrder.Packages = []*Package{
-		{
-			FirstSelectedBigTime: "0",
-			Products:             products,
-			EtaTraceId:           "",
-			PackageId:            1,
-			PackageType:          1,
-		},
-	}
 
-	s.PackageOrder.PaymentOrder = PaymentOrder{
+	p := Package{
+		FirstSelectedBigTime: "0",
+		Products:             products,
+		EtaTraceId:           "",
+		PackageId:            1,
+		PackageType:          1,
+	}
+	paymentOrder := PaymentOrder{
 		FreightDiscountMoney: "5.00",
 		FreightMoney:         "5.00",
 		OrderFreight:         "0.00",
 		AddressId:            s.Address.Id,
+		UsedPointNum:         0,
 		ParentOrderSign:      s.Cart.ParentOrderSign,
 		PayType:              s.PayType,
-		ProductType:          1,
+		OrderType:            1,
 		IsUseBalance:         0,
 		ReceiptWithoutSku:    "1",
 		Price:                s.Order.Price,
 	}
+	packageOrder := PackageOrder{
+		Packages: []*Package{
+			&p,
+		},
+		PaymentOrder: paymentOrder,
+	}
+	s.PackageOrder = packageOrder
 }
 
 func (s *Session) UpdatePackageOrder(reserveTime ReserveTime) {

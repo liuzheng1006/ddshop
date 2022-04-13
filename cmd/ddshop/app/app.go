@@ -63,26 +63,28 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			go func() {
-				for {
-					if err := Start(session); err != nil {
-						switch err {
-						case core.ErrorNoValidProduct:
-							logrus.Error("购物车中无有效商品，请先前往app添加或勾选！")
-							errCh <- err
-							return
-						case core.ErrorNoReserveTime:
-							sleepInterval := 3 + rand.Intn(6)
-							logrus.Warningf("暂无可预约的时间，%d 秒后重试！", sleepInterval)
-							time.Sleep(time.Duration(sleepInterval) * time.Second)
-						default:
-							logrus.Error(err)
-							time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
+			for i := 0; i < 1; i++ {
+				go func() {
+					for {
+						if err := Start(session); err != nil {
+							switch err {
+							case core.ErrorNoValidProduct:
+								logrus.Error("购物车中无有效商品，请先前往app添加或勾选！")
+								errCh <- err
+								return
+							case core.ErrorNoReserveTime:
+								sleepInterval := 3 + rand.Intn(6)
+								logrus.Warningf("暂无可预约的时间，%d 秒后重试！", sleepInterval)
+								time.Sleep(time.Duration(sleepInterval) * time.Second)
+							default:
+								logrus.Error(err)
+								time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
+							}
+							fmt.Println()
 						}
-						fmt.Println()
 					}
-				}
-			}()
+				}()
+			}
 
 			select {
 			case err := <-errCh:
@@ -115,7 +117,7 @@ func NewRootCommand() *cobra.Command {
 	//cookieEnv := os.Getenv("DDSHOP_COOKIE")
 	//barkKeyEnv := os.Getenv("DDSHOP_BARKKEY")
 	cmd.Flags().StringVar(&opt.Cookie, "cookie", "", "设置用户个人cookie")
-	//cmd.Flags().StringVar(&opt.BarkKey, "bark-key", barkKeyEnv, "设置bark的通知key")
+	cmd.Flags().StringVar(&opt.BarkKey, "bark-key", "", "设置bark的通知key")
 	cmd.Flags().Int64Var(&opt.Interval, "interval", 2000, "设置请求间隔时间(ms)，默认为100")
 	return cmd
 }

@@ -96,6 +96,10 @@ func (s *Session) Clone() *Session {
 		Cart:         s.Cart,
 		Order:        s.Order,
 		PackageOrder: s.PackageOrder,
+		apiVersion:   s.apiVersion,
+		appVersion:   s.appVersion,
+		channel:      s.channel,
+		appClientID:  s.appClientID,
 	}
 }
 
