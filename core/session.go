@@ -121,11 +121,11 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	case 0:
 		return resp, nil
 	case -3000, -3001:
-		logrus.Warningf("当前人多拥挤(%v): %s", code, resp.String())
+		//logrus.Warningf("当前人多拥挤(%v): %s", code, resp.String())
 	default:
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}
-	logrus.Warningf("将在 %dms 后重试", s.interval*2)
+	//logrus.Warningf("将在 %dms 后重试", s.interval*2)
 	time.Sleep(time.Duration(s.interval+rand.Int63n(s.interval)) * time.Millisecond)
 	return s.execute(nil, request, method, url)
 }
