@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/tidwall/gjson"
@@ -107,6 +108,10 @@ func (s *Session) GeneratePackageOrder() {
 		IsUseBalance:         0,
 		ReceiptWithoutSku:    "1",
 		Price:                s.Order.Price,
+	}
+	price, _ := strconv.ParseFloat(paymentOrder.Price, 32)
+	if price < 39 {
+		paymentOrder.OrderFreight = "5.00"
 	}
 	packageOrder := PackageOrder{
 		Packages: []*Package{

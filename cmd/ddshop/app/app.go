@@ -70,7 +70,7 @@ func NewRootCommand() *cobra.Command {
 							switch err {
 							case core.ErrorNoValidProduct:
 								logrus.Error("购物车中无有效商品，请先前往app添加或勾选！")
-								errCh <- err
+								//errCh <- err
 								return
 							case core.ErrorNoReserveTime:
 								sleepInterval := 3 + rand.Intn(6)
@@ -82,8 +82,10 @@ func NewRootCommand() *cobra.Command {
 							}
 							fmt.Println()
 						}
+						time.Sleep(time.Duration(rand.Int63n(20)) * time.Millisecond)
 					}
 				}()
+				time.Sleep(time.Duration(rand.Int63n(50)) * time.Millisecond)
 			}
 
 			select {
@@ -126,7 +128,7 @@ func NewRootCommand() *cobra.Command {
 }
 
 func Start(session *core.Session) error {
-	logrus.Info(">>> 获取购物车中有效商品")
+	//logrus.Info(">>> 获取购物车中有效商品")
 
 	if err := session.GetCart(); err != nil {
 		return fmt.Errorf("检查购物车失败: %v", err)
@@ -139,9 +141,9 @@ func Start(session *core.Session) error {
 		return fmt.Errorf("全选购车车商品失败: %v", err)
 	}
 
-	for index, prod := range session.Cart.ProdList {
-		logrus.Infof("[%v] %s 数量：%v 总价：%s", index, prod.ProductName, prod.Count, prod.TotalPrice)
-	}
+	//for index, prod := range session.Cart.ProdList {
+	//	logrus.Infof("[%v] %s 数量：%v 总价：%s", index, prod.ProductName, prod.Count, prod.TotalPrice)
+	//}
 	session.Order.Products = session.Cart.ProdList
 
 	for {
@@ -175,7 +177,7 @@ func Start(session *core.Session) error {
 				logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
 				return err
 			}
-
+			logrus.Warningf("提交订单(%s)成功！", timeRange)
 			successCh <- struct{}{}
 			return nil
 		})
