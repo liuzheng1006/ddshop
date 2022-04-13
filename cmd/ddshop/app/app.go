@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/zc2638/ddshop/pkg/notice"
@@ -78,6 +77,7 @@ func NewRootCommand() *cobra.Command {
 							time.Sleep(time.Duration(sleepInterval) * time.Second)
 						default:
 							logrus.Error(err)
+							time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 						}
 						fmt.Println()
 					}
@@ -112,11 +112,11 @@ func NewRootCommand() *cobra.Command {
 		},
 	}
 
-	cookieEnv := os.Getenv("DDSHOP_COOKIE")
-	barkKeyEnv := os.Getenv("DDSHOP_BARKKEY")
-	cmd.Flags().StringVar(&opt.Cookie, "cookie", cookieEnv, "设置用户个人cookie")
-	cmd.Flags().StringVar(&opt.BarkKey, "bark-key", barkKeyEnv, "设置bark的通知key")
-	cmd.Flags().Int64Var(&opt.Interval, "interval", 500, "设置请求间隔时间(ms)，默认为100")
+	//cookieEnv := os.Getenv("DDSHOP_COOKIE")
+	//barkKeyEnv := os.Getenv("DDSHOP_BARKKEY")
+	cmd.Flags().StringVar(&opt.Cookie, "cookie", "", "设置用户个人cookie")
+	//cmd.Flags().StringVar(&opt.BarkKey, "bark-key", barkKeyEnv, "设置bark的通知key")
+	cmd.Flags().Int64Var(&opt.Interval, "interval", 2000, "设置请求间隔时间(ms)，默认为100")
 	return cmd
 }
 
@@ -140,15 +140,15 @@ func Start(session *core.Session) error {
 	session.Order.Products = session.Cart.ProdList
 
 	for {
-		logrus.Info(">>> 生成订单信息")
+		//logrus.Info(">>> 生成订单信息")
 		if err := session.CheckOrder(); err != nil {
 			return fmt.Errorf("检查订单失败: %v", err)
 		}
-		logrus.Infof("订单总金额：%v\n", session.Order.Price)
+		//logrus.Infof("订单总金额：%v\n", session.Order.Price)
 
 		session.GeneratePackageOrder()
 
-		logrus.Info(">>> 获取可预约时间")
+		//logrus.Info(">>> 获取可预约时间")
 		multiReserveTime, err := session.GetMultiReserveTime()
 		if err != nil {
 			return fmt.Errorf("获取可预约时间失败: %v", err)
@@ -156,7 +156,7 @@ func Start(session *core.Session) error {
 		if len(multiReserveTime) == 0 {
 			return core.ErrorNoReserveTime
 		}
-		logrus.Infof("发现可用的配送时段!")
+		//logrus.Infof("发现可用的配送时段!")
 
 		var wg errgroup.Group
 		for _, reserveTime := range multiReserveTime {

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -121,8 +122,8 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	default:
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}
-	logrus.Warningf("将在 %dms 后重试", s.interval)
-	time.Sleep(time.Duration(s.interval) * time.Millisecond)
+	logrus.Warningf("将在 %dms 后重试", s.interval*2)
+	time.Sleep(time.Duration(s.interval+rand.Int63n(s.interval)) * time.Millisecond)
 	return s.execute(nil, request, method, url)
 }
 
