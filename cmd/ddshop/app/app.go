@@ -23,10 +23,6 @@ import (
 
 	"github.com/zc2638/ddshop/pkg/notice"
 
-	"github.com/zc2638/ddshop/asserts"
-
-	"golang.org/x/sync/errgroup"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -63,7 +59,7 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			for i := 0; i < 5; i++ {
+			for i := 0; i < 1; i++ {
 				go func() {
 					for {
 						if err := Start(session); err != nil {
@@ -73,22 +69,33 @@ func NewRootCommand() *cobra.Command {
 								time.Sleep(10 * time.Second)
 								errCh <- err
 								return
+							case core.ErrNoValidFreight:
+								logrus.Errorf("运费支付金额不正确，%d 秒后退出！", 10)
+								time.Sleep(10 * time.Second)
+								errCh <- err
+								return
+							case core.ErrOperator, core.ErrMethodNotAllowed:
+								logrus.Error(err)
+								time.Sleep(3 * time.Second)
 							case core.ErrorNoReserveTime:
 								sleepInterval := 60 + rand.Intn(500)
 								logrus.Warningf("暂无可预约的时间，%d 秒后重试！", sleepInterval)
 								time.Sleep(time.Duration(sleepInterval) * time.Second)
 							default:
 								logrus.Error(err)
+								time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 							}
-							//fmt.Println()
 						}
-						time.Sleep(time.Duration(opt.Interval+rand.Int63n(opt.Interval)) * time.Millisecond)
 					}
 				}()
-				time.Sleep(time.Duration(83+rand.Int63n(57)) * time.Millisecond)
+				time.Sleep(time.Duration(400+rand.Int63n(100)) * time.Millisecond)
 			}
 
+			ticker := time.NewTicker(time.Minute * 15)
+			defer ticker.Stop()
 			select {
+			case <-ticker.C:
+				return errors.New("程序执行15分钟退出")
 			case err := <-errCh:
 				return err
 			case <-successCh:
@@ -109,9 +116,9 @@ func NewRootCommand() *cobra.Command {
 					}
 				}()
 
-				if err := asserts.Play(); err != nil {
-					logrus.Warningf("播放成功提示音乐失败: %v", err)
-				}
+				//if err := asserts.Play(); err != nil {
+				//	logrus.Warningf("播放成功提示音乐失败: %v", err)
+				//}
 				// 异步放歌，歌曲有3分钟
 				time.Sleep(3 * time.Minute)
 				return nil
@@ -131,7 +138,7 @@ func Start(session *core.Session) error {
 	//logrus.Info(">>> 获取购物车中有效商品")
 
 	if err := session.GetCart(); err != nil {
-		return fmt.Errorf("检查购物车失败: %v", err)
+		return err
 	}
 	if len(session.Cart.ProdList) == 0 {
 		return core.ErrorNoValidProduct
@@ -165,23 +172,18 @@ func Start(session *core.Session) error {
 		}
 		//logrus.Infof("发现可用的配送时段!")
 
-		var wg errgroup.Group
 		sess := session.Clone()
 		sess.UpdatePackageOrder(multiReserveTime[len(multiReserveTime)-1])
-		wg.Go(func() error {
-			startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
-			endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
-			timeRange := startTime + "——" + endTime
-			logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
-			if err := sess.CreateOrder(context.Background()); err != nil {
-				logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
-				return err
-			}
-			logrus.Warningf("提交订单(%s)成功！", timeRange)
-			successCh <- struct{}{}
-			return nil
-		})
-		_ = wg.Wait()
+		startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
+		endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
+		timeRange := startTime + "——" + endTime
+		logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
+		if err = sess.CreateOrder(context.Background()); err != nil {
+			logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
+			return err
+		}
+		logrus.Warningf("提交订单(%s)成功！", timeRange)
+		successCh <- struct{}{}
 		return nil
 	}
 }

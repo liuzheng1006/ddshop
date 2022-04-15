@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -177,7 +178,9 @@ func (s *Session) CheckOrder() error {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
+	startTime := time.Now()
 	resp, err := s.execute(context.TODO(), req, http.MethodPost, urlPath)
+	fmt.Printf("检查订单耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return err
 	}
@@ -203,6 +206,8 @@ func (s *Session) CreateOrder(ctx context.Context) error {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
+	startTime := time.Now()
 	_, err = s.execute(ctx, req, http.MethodPost, urlPath)
+	fmt.Printf("创单耗时%+v\n", time.Now().Sub(startTime))
 	return err
 }

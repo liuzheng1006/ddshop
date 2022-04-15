@@ -35,8 +35,9 @@ func main() {
 		TimestampFormat:        TimeFormat,
 	})
 	command := app.NewRootCommand()
-	time.Sleep(NextDay(5, 59, 40))
-	fmt.Println(time.Now().String())
+	duration := NextDay(5, 59, 43)
+	fmt.Println(duration)
+	//time.Sleep(duration)
 	//time.Sleep(5*time.Second)
 	//fmt.Println(time.Now().String())
 	if err := command.Execute(); err != nil {

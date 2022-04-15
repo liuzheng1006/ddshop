@@ -55,8 +55,8 @@ func NewSession(cookie string, interval int64) *Session {
 		client:   client,
 		interval: interval,
 
-		apiVersion:  "9.49.2",
-		appVersion:  "2.82.0",
+		apiVersion:  "9.50.0",
+		appVersion:  "2.83.0",
 		channel:     "applet",
 		appClientID: "4",
 	}
@@ -111,6 +111,10 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
 	}
+	// 当用户访问有可能对网站造成安全威胁的URL时，会收到405报错，提示访问被WAF拦截。
+	if resp.StatusCode() == http.StatusMethodNotAllowed {
+		return nil, ErrMethodNotAllowed
+	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("statusCode: %d, body: %s", resp.StatusCode(), resp.String())
 	}
@@ -120,8 +124,12 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	switch code {
 	case 0:
 		return resp, nil
-	case -3000, -3001:
+	case -3000, -3001, -3100: // -3100:检查订单失败，加载失败，请重新尝试
 		//logrus.Warningf("当前人多拥挤(%v): %s", code, resp.String())
+	case 5003:
+		return nil, ErrNoValidFreight
+	case -1:
+		return nil, ErrOperator
 	default:
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}

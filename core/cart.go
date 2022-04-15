@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -228,7 +229,9 @@ func (s *Session) CartAllCheck() error {
 
 	req := s.client.R()
 	req.Header = s.buildHeader()
+	startTime := time.Now()
 	_, err = s.execute(context.Background(), req, http.MethodGet, urlPath)
+	fmt.Printf("全选购物车耗时%+v\n", time.Now().Sub(startTime))
 	return err
 }
 
@@ -246,7 +249,9 @@ func (s *Session) GetCart() error {
 
 	req := s.client.R()
 	req.Header = s.buildHeader()
+	startTime := time.Now()
 	resp, err := s.execute(context.Background(), req, http.MethodGet, urlPath)
+	fmt.Printf("请求购物车耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return err
 	}

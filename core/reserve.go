@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
@@ -46,7 +47,10 @@ func (s *Session) GetMultiReserveTime() ([]ReserveTime, error) {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
+
+	startTime := time.Now()
 	resp, err := s.execute(context.Background(), req, http.MethodPost, urlPath)
+	fmt.Printf("获取可预约时间耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return nil, err
 	}
