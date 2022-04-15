@@ -69,6 +69,11 @@ func NewRootCommand() *cobra.Command {
 								time.Sleep(10 * time.Second)
 								errCh <- err
 								return
+							case core.ErrorNoValidReserveTime:
+								logrus.Errorf("预约时间不合法，%d 秒后退出！", 10)
+								time.Sleep(10 * time.Second)
+								errCh <- err
+								return
 							case core.ErrNoValidFreight:
 								logrus.Errorf("运费支付金额不正确，%d 秒后退出！", 10)
 								time.Sleep(10 * time.Second)
@@ -130,7 +135,7 @@ func NewRootCommand() *cobra.Command {
 	//barkKeyEnv := os.Getenv("DDSHOP_BARKKEY")
 	cmd.Flags().StringVar(&opt.Cookie, "cookie", "", "设置用户个人cookie")
 	cmd.Flags().StringVar(&opt.BarkKey, "bark-key", "", "设置bark的通知key")
-	cmd.Flags().Int64Var(&opt.Interval, "interval", 45, "设置请求间隔时间(ms)，默认为100")
+	cmd.Flags().Int64Var(&opt.Interval, "interval", 300, "设置请求间隔时间(ms)，默认为100")
 	return cmd
 }
 
@@ -177,6 +182,10 @@ func Start(session *core.Session) error {
 		startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
 		endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
 		timeRange := startTime + "——" + endTime
+		//if !checkReservedTime(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart)) {
+		//	fmt.Printf("预约时间段(%s)不合法\n", timeRange)
+		//	return core.ErrorNoValidReserveTime
+		//}
 		logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
 		if err = sess.CreateOrder(context.Background()); err != nil {
 			logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
@@ -186,4 +195,16 @@ func Start(session *core.Session) error {
 		successCh <- struct{}{}
 		return nil
 	}
+}
+
+func checkReservedTime(reservedTime int64) bool {
+	n, r := time.Now(), time.Unix(reservedTime, 0)
+	// 预订时间不在今天
+	if n.Year() != r.Year() || n.Month() != r.Month() || n.Day() != r.Day() {
+		return false
+	}
+	if !r.After(n) {
+		return false
+	}
+	return true
 }

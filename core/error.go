@@ -21,9 +21,10 @@ func (e Error) Error() string {
 }
 
 const (
-	ErrorNoValidProduct = Error("无有效商品")
-	ErrorNoReserveTime  = Error("无可预约时间段")
-	ErrNoValidFreight   = Error("运费支付金额不正确")
-	ErrOperator         = Error("操作失败")
-	ErrMethodNotAllowed = Error("MethodNotAllowed")
+	ErrorNoValidProduct     = Error("无有效商品")
+	ErrorNoReserveTime      = Error("无可预约时间段")
+	ErrNoValidFreight       = Error("运费支付金额不正确")
+	ErrOperator             = Error("操作失败")
+	ErrMethodNotAllowed     = Error("MethodNotAllowed")
+	ErrorNoValidReserveTime = Error("预定时间小于当前时间，不合法")
 )
