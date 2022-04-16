@@ -132,6 +132,23 @@ func (s *Session) UpdatePackageOrder(reserveTime ReserveTime) {
 	}
 }
 
+func (s *Session) OrderFlashSale() error {
+	urlPath := "https://maicai.api.ddxq.mobi/orderFlashSale/check"
+
+	params := s.buildURLParams(true)
+
+	req := s.client.R()
+	req.Header = s.buildHeader()
+	req.SetBody(strings.NewReader(params.Encode()))
+	startTime := time.Now()
+	_, err := s.execute(context.TODO(), req, http.MethodGet, urlPath)
+	fmt.Printf("OrderFlashSale耗时%+v\n", time.Now().Sub(startTime))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Session) CheckOrder() error {
 	urlPath := "https://maicai.api.ddxq.mobi/order/checkOrder"
 

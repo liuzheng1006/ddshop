@@ -121,11 +121,23 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 
 	result := gjson.ParseBytes(resp.Body())
 	code := result.Get("code").Num
+	isFlashSale := result.Get("data.is_flash_sale").Int()
+	if isFlashSale != 0 {
+		code = -2000
+	}
 	switch code {
 	case 0:
 		return resp, nil
-	case -3000, -3001, -3100: // -3100:检查订单失败，加载失败，请重新尝试
-		//logrus.Warningf("当前人多拥挤(%v): %s", code, resp.String())
+	case -3000, -3001, -3100:
+		// -3000:检查订单报错，当前人多拥挤，请稍后尝试刷新页面
+		// -3100:检查订单失败，加载失败，请重新尝试
+		// -3100:提交订单报错拥挤
+		duration := time.Duration(s.interval + rand.Int63n(s.interval))
+		logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)", duration, code)
+		time.Sleep(duration * time.Millisecond)
+		return s.execute(nil, request, method, url)
+	case -2000:
+		return nil, ErrCapacityFull
 	case 5003:
 		return nil, ErrNoValidFreight
 	case -1:
@@ -133,10 +145,6 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	default:
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}
-	duration := time.Duration(s.interval + rand.Int63n(s.interval))
-	logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)", duration, code)
-	time.Sleep(duration * time.Millisecond)
-	return s.execute(nil, request, method, url)
 }
 
 func (s *Session) buildHeader() http.Header {

@@ -79,6 +79,11 @@ func NewRootCommand() *cobra.Command {
 								time.Sleep(10 * time.Second)
 								errCh <- err
 								return
+							case core.ErrCapacityFull:
+								logrus.Errorf("由于近期疫情问题，配送运力紧张，本站点当前运力已约满，%d 秒后退出！", 10)
+								time.Sleep(10 * time.Second)
+								errCh <- err
+								return
 							case core.ErrOperator, core.ErrMethodNotAllowed:
 								logrus.Error(err)
 								time.Sleep(3 * time.Second)
@@ -157,44 +162,44 @@ func Start(session *core.Session) error {
 	//	logrus.Infof("[%v] %s 数量：%v 总价：%s", index, prod.ProductName, prod.Count, prod.TotalPrice)
 	//}
 	session.Order.Products = session.Cart.ProdList
-
-	for {
-		//logrus.Info(">>> 生成订单信息")
-		if err := session.CheckOrder(); err != nil {
-			return fmt.Errorf("检查订单失败: %v", err)
-		}
-		//logrus.Infof("订单总金额：%v\n", session.Order.Price)
-
-		session.GeneratePackageOrder()
-
-		//logrus.Info(">>> 获取可预约时间")
-		multiReserveTime, err := session.GetMultiReserveTime()
-		if err != nil {
-			return fmt.Errorf("获取可预约时间失败: %v", err)
-		}
-		if len(multiReserveTime) == 0 {
-			return core.ErrorNoReserveTime
-		}
-		//logrus.Infof("发现可用的配送时段!")
-
-		sess := session.Clone()
-		sess.UpdatePackageOrder(multiReserveTime[len(multiReserveTime)-1])
-		startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
-		endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
-		timeRange := startTime + "——" + endTime
-		//if !checkReservedTime(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart)) {
-		//	fmt.Printf("预约时间段(%s)不合法\n", timeRange)
-		//	return core.ErrorNoValidReserveTime
-		//}
-		logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
-		if err = sess.CreateOrder(context.Background()); err != nil {
-			logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
-			return err
-		}
-		logrus.Warningf("提交订单(%s)成功！", timeRange)
-		successCh <- struct{}{}
-		return nil
+	if err := session.OrderFlashSale(); err != nil {
+		return err
 	}
+	//logrus.Info(">>> 生成订单信息")
+	if err := session.CheckOrder(); err != nil {
+		return fmt.Errorf("检查订单失败: %v", err)
+	}
+	//logrus.Infof("订单总金额：%v\n", session.Order.Price)
+
+	session.GeneratePackageOrder()
+
+	//logrus.Info(">>> 获取可预约时间")
+	multiReserveTime, err := session.GetMultiReserveTime()
+	if err != nil {
+		return fmt.Errorf("获取可预约时间失败: %v", err)
+	}
+	if len(multiReserveTime) == 0 {
+		return core.ErrorNoReserveTime
+	}
+	//logrus.Infof("发现可用的配送时段!")
+
+	sess := session.Clone()
+	sess.UpdatePackageOrder(multiReserveTime[len(multiReserveTime)-1])
+	startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
+	endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
+	timeRange := startTime + "——" + endTime
+	//if !checkReservedTime(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart)) {
+	//	fmt.Printf("预约时间段(%s)不合法\n", timeRange)
+	//	return core.ErrorNoValidReserveTime
+	//}
+	logrus.Infof(">>> 提交订单中, 预约时间段(%s)", timeRange)
+	if err = sess.CreateOrder(context.Background()); err != nil {
+		logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
+		return err
+	}
+	logrus.Warningf("提交订单(%s)成功！", timeRange)
+	successCh <- struct{}{}
+	return nil
 }
 
 func checkReservedTime(reservedTime int64) bool {

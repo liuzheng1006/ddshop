@@ -27,4 +27,5 @@ const (
 	ErrOperator             = Error("操作失败")
 	ErrMethodNotAllowed     = Error("MethodNotAllowed")
 	ErrorNoValidReserveTime = Error("预定时间小于当前时间，不合法")
+	ErrCapacityFull         = Error("由于近期疫情问题，配送运力紧张，本站点当前运力已约满")
 )
