@@ -224,6 +224,10 @@ func (s *Session) CreateOrder(ctx context.Context) error {
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
 	startTime := time.Now()
+
+	for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 6, 0, 0, 0, n.Location())); n = time.Now() {
+		time.Sleep(1 * time.Millisecond)
+	}
 	_, err = s.execute(ctx, req, http.MethodPost, urlPath)
 	fmt.Printf("创单耗时%+v\n", time.Now().Sub(startTime))
 	return err

@@ -15,12 +15,12 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/zc2638/ddshop/cmd/ddshop/app"
 
+	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,14 +35,14 @@ func main() {
 		TimestampFormat:        TimeFormat,
 	})
 	command := app.NewRootCommand()
-	duration := NextDay(5, 59, 43)
-	fmt.Println(duration)
-	//time.Sleep(duration)
-	//time.Sleep(5*time.Second)
-	//fmt.Println(time.Now().String())
+	c := cron.New()
+	//_ = c.AddFunc("50 59 5 * * *", func() {
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
 	}
+	//})
+	c.Start()
+	select {}
 }
 
 func NextDay(hour, min, second int) time.Duration {
