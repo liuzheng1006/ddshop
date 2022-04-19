@@ -29,9 +29,9 @@ const (
 var StopDaemonThread bool
 
 var WrapFun = func(do func() error) {
-	WaitStart()
 	for i := 0; i < _daemonThreadNum; i++ {
 		go func() {
+			WaitStart()
 			for {
 				if StopDaemonThread {
 					return
