@@ -14,8 +14,43 @@
 
 package core
 
+import (
+	"math/rand"
+	"time"
+)
+
+const (
+	// 守护线程数
+	_daemonThreadNum = 2
+	// 最小的请求间隔，_sleepMinMillSec+rand.Int63n(_sleepMinMillSec/2)
+	_sleepMinMillSec = 200
+)
+
+var StopDaemonThread bool
+
+var WrapFun = func(do func() error) {
+	WaitStart()
+	for i := 0; i < _daemonThreadNum; i++ {
+		go func() {
+			for {
+				if StopDaemonThread {
+					return
+				}
+				_ = do()
+				time.Sleep(time.Duration(_sleepMinMillSec+rand.Int63n(_sleepMinMillSec/2)) * time.Millisecond)
+			}
+		}()
+	}
+}
+
 func LoopRun(num int, f func()) {
 	for i := 0; i < num; i++ {
 		f()
+	}
+}
+
+func WaitStart() {
+	for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 5, 59, 59, 899999999, n.Location())); n = time.Now() {
+		time.Sleep(1 * time.Microsecond)
 	}
 }

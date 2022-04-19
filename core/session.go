@@ -53,18 +53,21 @@ func NewSession(cookie string, interval int64) *Session {
 	client.Header = header
 	return &Session{
 		client:   client,
-		interval: interval,
+		Interval: interval,
 
-		apiVersion:  "9.50.0",
-		appVersion:  "2.83.0",
-		channel:     "applet",
-		appClientID: "4",
+		apiVersion:   "9.50.0",
+		appVersion:   "2.83.0",
+		channel:      "applet",
+		appClientID:  "4",
+		Cart:         &Cart{},
+		Order:        &Order{},
+		PackageOrder: &PackageOrder{},
 	}
 }
 
 type Session struct {
 	client   *resty.Client
-	interval int64 // 间隔请求时间(ms)
+	Interval int64 // 间隔请求时间(ms)
 
 	channel     string
 	apiVersion  string
@@ -77,15 +80,15 @@ type Session struct {
 	PayType  int
 	CartMode int
 
-	Cart         Cart
-	Order        Order
-	PackageOrder PackageOrder
+	Cart         *Cart
+	Order        *Order
+	PackageOrder *PackageOrder
 }
 
 func (s *Session) Clone() *Session {
 	return &Session{
 		client:   s.client,
-		interval: s.interval,
+		Interval: s.Interval,
 
 		UserID:   s.UserID,
 		Address:  s.Address,
@@ -104,6 +107,7 @@ func (s *Session) Clone() *Session {
 }
 
 func (s *Session) execute(ctx context.Context, request *resty.Request, method, url string) (*resty.Response, error) {
+	urlAbbr := strings.Split(url, "/")
 	if ctx != nil {
 		request.SetContext(ctx)
 	}
@@ -121,20 +125,13 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 
 	result := gjson.ParseBytes(resp.Body())
 	code := result.Get("code").Num
-	isFlashSale := result.Get("data.is_flash_sale").Int()
-	if isFlashSale != 0 {
-		code = -2000
-	}
 	switch code {
 	case 0:
 		return resp, nil
 	case 1, -3000, -3001, -3100:
 		// -3000:检查订单报错，当前人多拥挤，请稍后尝试刷新页面
 		// -3100:检查订单失败，加载失败，请重新尝试
-		// -3100:提交订单报错拥挤
-
-	case -2000:
-		//return nil, ErrCapacityFull
+		// -3001:提交订单报错拥挤
 	case 5003:
 		return nil, ErrNoValidFreight
 	case -1:
@@ -142,8 +139,8 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 	default:
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}
-	duration := time.Duration(s.interval + rand.Int63n(s.interval))
-	logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)", duration, resp.String())
+	duration := time.Duration(s.Interval + rand.Int63n(s.Interval/2))
+	logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)(%s)", duration, urlAbbr[len(urlAbbr)-2]+"/"+strings.Split(urlAbbr[len(urlAbbr)-1], "?")[0], resp.String())
 	time.Sleep(duration * time.Millisecond)
 	return s.execute(nil, request, method, url)
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 	"time"
@@ -50,7 +51,7 @@ func (s *Session) GetMultiReserveTime() ([]ReserveTime, error) {
 
 	startTime := time.Now()
 	resp, err := s.execute(context.Background(), req, http.MethodPost, urlPath)
-	fmt.Printf("获取可预约时间耗时%+v\n", time.Now().Sub(startTime))
+	logrus.Info("获取可预约时间耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return nil, err
 	}

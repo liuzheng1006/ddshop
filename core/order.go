@@ -18,9 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -120,7 +123,11 @@ func (s *Session) GeneratePackageOrder() {
 		},
 		PaymentOrder: paymentOrder,
 	}
-	s.PackageOrder = packageOrder
+	start := s.PackageOrder.PaymentOrder.ReservedTimeStart
+	end := s.PackageOrder.PaymentOrder.ReservedTimeEnd
+	s.PackageOrder = &packageOrder
+	s.PackageOrder.PaymentOrder.ReservedTimeStart = start
+	s.PackageOrder.PaymentOrder.ReservedTimeEnd = end
 }
 
 func (s *Session) UpdatePackageOrder(reserveTime ReserveTime) {
@@ -140,18 +147,44 @@ func (s *Session) OrderFlashSale() error {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
-	startTime := time.Now()
 	_, err := s.execute(context.TODO(), req, http.MethodGet, urlPath)
-	fmt.Printf("OrderFlashSale耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+var (
+	checkOrderReqOnce  = sync.Once{}
+	createOrderReqOnce = sync.Once{}
+)
+
 func (s *Session) CheckOrder() error {
 	urlPath := "https://maicai.api.ddxq.mobi/order/checkOrder"
-
+	req := s.buildCheckOrderReq()
+	checkOrderReqOnce.Do(func() {
+		logrus.Info("-----------检查订单-刷新请求守护线程启动-------------")
+		go func() {
+			for {
+				req = s.buildCheckOrderReq()
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	})
+	startTime := time.Now()
+	resp, err := s.execute(context.TODO(), req, http.MethodPost, urlPath)
+	if err != nil {
+		return err
+	}
+	logrus.Info(fmt.Sprintf("检查订单耗时%+v\n", time.Now().Sub(startTime)))
+	mutex := sync.Mutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.Order.Price = gjson.Get(resp.String(), "data.order.total_money").Str
+	s.GeneratePackageOrder()
+	return nil
+}
+func (s *Session) buildCheckOrderReq() *resty.Request {
 	var products []map[string]interface{}
 	for _, product := range s.Order.Products {
 		prod := map[string]interface{}{
@@ -173,10 +206,7 @@ func (s *Session) CheckOrder() error {
 			"products":     products,
 		},
 	}
-	packagesJson, err := json.Marshal(packagesInfo)
-	if err != nil {
-		return fmt.Errorf("marshal products info failed: %v", err)
-	}
+	packagesJson, _ := json.Marshal(packagesInfo)
 
 	params := s.buildURLParams(true)
 	params.Add("user_ticket_id", "default")
@@ -195,24 +225,28 @@ func (s *Session) CheckOrder() error {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
-	startTime := time.Now()
-	resp, err := s.execute(context.TODO(), req, http.MethodPost, urlPath)
-	fmt.Printf("检查订单耗时%+v\n", time.Now().Sub(startTime))
-	if err != nil {
-		return err
-	}
-
-	s.Order.Price = gjson.Get(resp.String(), "data.order.total_money").Str
-	return nil
+	return req
 }
 
 func (s *Session) CreateOrder(ctx context.Context) error {
 	urlPath := "https://maicai.api.ddxq.mobi/order/addNewOrder"
+	req := s.buildCreateOrderReq()
+	createOrderReqOnce.Do(func() {
+		go func() {
+			logrus.Info("-----------创建订单-刷新请求守护线程启动-------------")
+			for {
+				req = s.buildCreateOrderReq()
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	})
+	WaitStart()
+	_, err := s.execute(ctx, req, http.MethodPost, urlPath)
+	return err
+}
 
-	packageOrderJson, err := json.Marshal(s.PackageOrder)
-	if err != nil {
-		return fmt.Errorf("marshal products info failed: %v", err)
-	}
+func (s *Session) buildCreateOrderReq() *resty.Request {
+	packageOrderJson, _ := json.Marshal(s.PackageOrder)
 
 	params := s.buildURLParams(true)
 	params.Add("package_order", string(packageOrderJson))
@@ -223,12 +257,5 @@ func (s *Session) CreateOrder(ctx context.Context) error {
 	req := s.client.R()
 	req.Header = s.buildHeader()
 	req.SetBody(strings.NewReader(params.Encode()))
-	startTime := time.Now()
-
-	for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 6, 0, 0, 0, n.Location())); n = time.Now() {
-		time.Sleep(1 * time.Millisecond)
-	}
-	_, err = s.execute(ctx, req, http.MethodPost, urlPath)
-	fmt.Printf("创单耗时%+v\n", time.Now().Sub(startTime))
-	return err
+	return req
 }

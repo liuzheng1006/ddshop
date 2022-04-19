@@ -18,11 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"net/http"
 	"net/url"
-	"time"
-
-	"github.com/tidwall/gjson"
+	"sync"
 )
 
 // {"success":true,"code":0,"msg":"success","data":{"product":{"effective":[{"activity_info":{"id":"","gifts":null},"products":[{"id":"5e3f82cf7cdbf0131769408b","type":0,"category":"58fbf4fb936edf42508b4654","price":"4.59","sizes":[],"count":1,"status":1,"gifts":[],"addTime":1649606883,"cart_id":"5e3f82cf7cdbf0131769408b","activity_id":"","sku_activity_id":"","conditions_num":"","activity_tag":"","category_path":"58f9d213936edfe4568b569a,58fbf4fb936edf42508b4654","manage_category_path":"21,25,27","total_price":"4.59","origin_price":"4.59","no_supplementary_price":"4.59","no_supplementary_total_price":"4.59","size_price":"0.00","add_price":"4.59","add_vip_price":"","price_type":0,"buy_limit":0,"promotion_num":0,"product_name":"生姜 约300g","product_type":0,"small_image":"https://img.ddimg.mobi/product/3e7b7be5aa0b91616204086733.jpg?width=800&height=800","all_sizes":[],"only_new_user":false,"is_check":1,"is_gift":0,"is_bulk":0,"view_total_weight":"份","net_weight":"300","net_weight_unit":"g","is_stock":false,"old_count":1,"stock_number":1,"not_meet":[],"is_presale":0,"presale_id":"","presale_type":0,"delivery_start_time":0,"delivery_end_time":0,"is_invoice":1,"is_onion":0,"sub_list":[],"is_booking":0,"today_stockout":"","storage_value_id":0,"temperature_layer":"","is_shared_station_product":0,"is_fresh_food":0,"accessory_gifts":[],"accessory_text":"","supplementary_list":[]},{"id":"5e721d22b0055a0b5f763edf","type":0,"category":"58fbf4fb936edf42508b4654","price":"4.99","sizes":[],"count":1,"status":1,"gifts":[],"addTime":1649606846,"cart_id":"5e721d22b0055a0b5f763edf","activity_id":"","sku_activity_id":"","conditions_num":"","activity_tag":"","category_path":"58f9d213936edfe4568b569a,58fbf4fb936edf42508b4654","manage_category_path":"21,25,28","total_price":"4.99","origin_price":"4.99","no_supplementary_price":"4.99","no_supplementary_total_price":"4.99","size_price":"0.00","add_price":"4.99","add_vip_price":"","price_type":0,"buy_limit":0,"promotion_num":0,"product_name":"蒜头 约250g","product_type":0,"small_image":"https://img.ddimg.mobi/product/da62352cab2281613723470985.jpg?width=800&height=800","all_sizes":[],"only_new_user":false,"is_check":1,"is_gift":0,"is_bulk":0,"view_total_weight":"份","net_weight":"250","net_weight_unit":"g","is_stock":false,"old_count":1,"stock_number":1,"not_meet":[],"is_presale":0,"presale_id":"","presale_type":0,"delivery_start_time":0,"delivery_end_time":0,"is_invoice":1,"is_onion":0,"sub_list":[],"is_booking":0,"today_stockout":"","storage_value_id":0,"temperature_layer":"","is_shared_station_product":0,"is_fresh_food":0,"accessory_gifts":[],"accessory_text":"","supplementary_list":[]}]}],"invalid":[{"products":[{"id":"614d6cce8f1ed4f0871a2ca9","type":0,"category":"","price":"29.90","sizes":[],"count":1,"status":1,"gifts":[],"addTime":1649607493,"cart_id":"614d6cce8f1ed4f0871a2ca9","activity_id":"","sku_activity_id":"","conditions_num":"","activity_tag":"","category_path":"","manage_category_path":"258,259,262","origin_price":"29.90","size_price":"0.00","add_price":"29.90","add_vip_price":"","price_type":0,"buy_limit":0,"promotion_num":0,"product_name":"必品阁白菜猪肉王水饺 600g/袋","product_type":0,"small_image":"https://imgnew.ddimg.mobi/product/7f2617ebacf147999a4d356d375e6acf.gif?width=800&height=800","only_new_user":false,"is_check":0,"is_gift":0,"is_bulk":0,"view_total_weight":"袋","net_weight":"600","net_weight_unit":"g","is_stock":true,"old_count":1,"stock_number":0,"not_meet":[],"is_presale":0,"presale_id":"","presale_type":0,"delivery_start_time":0,"delivery_end_time":0,"is_invoice":1,"is_onion":0,"sub_list":[],"is_booking":0,"today_stockout":"","promotion_info":"","storage_value_id":3,"temperature_layer":"-18℃以下","is_fresh_food":0},{"id":"58ba8c02916edf9e4cc23072","type":0,"category":"58fb3b89936edfe4568b58ec","price":"9.90","sizes":[],"count":1,"status":1,"gifts":[],"addTime":1649607194,"cart_id":"58ba8c02916edf9e4cc23072","activity_id":"","sku_activity_id":"","conditions_num":"","activity_tag":"","category_path":"58f9e5a1936edf89778b568b,58fb3b89936edfe4568b58ec","manage_category_path":"330,331,332","origin_price":"9.90","size_price":"0.00","add_price":"9.90","add_vip_price":"","price_type":0,"buy_limit":0,"promotion_num":0,"product_name":"海天金标生抽酱油 500ml/瓶","product_type":0,"small_image":"https://ddimg.ddxq.mobi/879853186f70b1521771055327.jpg!maicai.product.list","only_new_user":false,"is_check":0,"is_gift":0,"is_bulk":0,"view_total_weight":"瓶","net_weight":"500","net_weight_unit":"ml","is_stock":true,"old_count":1,"stock_number":0,"not_meet":[],"is_presale":0,"presale_id":"","presale_type":0,"delivery_start_time":0,"delivery_end_time":0,"is_invoice":1,"is_onion":0,"sub_list":[],"is_booking":0,"today_stockout":"","promotion_info":"","storage_value_id":0,"temperature_layer":"","is_fresh_food":0}]}]},"toast":"","alert":null,"all_activity_cart":[],"station_id":"5c04bdd0716de1403a8b679b","order_product_list":[],"new_order_product_list":[{"products":[{"type":1,"id":"5e3f82cf7cdbf0131769408b","price":"4.59","count":1,"description":"","sizes":[],"cart_id":"5e3f82cf7cdbf0131769408b","parent_id":"","parent_batch_type":-1,"category_path":"58f9d213936edfe4568b569a,58fbf4fb936edf42508b4654","manage_category_path":"21,25,27","activity_id":"","sku_activity_id":"","conditions_num":"","product_name":"生姜 约300g","product_type":0,"small_image":"https://img.ddimg.mobi/product/3e7b7be5aa0b91616204086733.jpg?width=800&height=800","total_price":"4.59","origin_price":"4.59","total_origin_price":"4.59","no_supplementary_price":"4.59","no_supplementary_total_price":"4.59","size_price":"0.00","buy_limit":0,"price_type":0,"promotion_num":0,"instant_rebate_money":"0.00","is_invoice":1,"sub_list":[],"is_booking":0,"is_bulk":0,"view_total_weight":"份","net_weight":"300","net_weight_unit":"g","storage_value_id":0,"temperature_layer":"","sale_batches":{"batch_type":-1},"is_shared_station_product":0,"is_gift":0,"supplementary_list":[],"order_sort":3,"is_presale":0},{"type":1,"id":"5e721d22b0055a0b5f763edf","price":"4.99","count":1,"description":"","sizes":[],"cart_id":"5e721d22b0055a0b5f763edf","parent_id":"","parent_batch_type":-1,"category_path":"58f9d213936edfe4568b569a,58fbf4fb936edf42508b4654","manage_category_path":"21,25,28","activity_id":"","sku_activity_id":"","conditions_num":"","product_name":"蒜头 约250g","product_type":0,"small_image":"https://img.ddimg.mobi/product/da62352cab2281613723470985.jpg?width=800&height=800","total_price":"4.99","origin_price":"4.99","total_origin_price":"4.99","no_supplementary_price":"4.99","no_supplementary_total_price":"4.99","size_price":"0.00","buy_limit":0,"price_type":0,"promotion_num":0,"instant_rebate_money":"0.00","is_invoice":1,"sub_list":[],"is_booking":0,"is_bulk":0,"view_total_weight":"份","net_weight":"250","net_weight_unit":"g","storage_value_id":0,"temperature_layer":"","sale_batches":{"batch_type":-1},"is_shared_station_product":0,"is_gift":0,"supplementary_list":[],"order_sort":4,"is_presale":0}],"total_money":"9.58","total_origin_money":"9.58","goods_real_money":"9.58","total_count":2,"cart_count":2,"is_presale":0,"instant_rebate_money":"0.00","used_balance_money":"0.00","can_used_balance_money":"0.00","used_point_num":0,"used_point_money":"0.00","can_used_point_num":0,"can_used_point_money":"0.00","is_share_station":0,"only_today_products":[],"only_tomorrow_products":[],"package_type":1,"package_id":1,"front_package_text":"即时配送","front_package_type":0,"front_package_stock_color":"#2FB157","front_package_bg_color":"#fbfefc"}],"order_product_list_sign":"d751713988987e9331980363e24189ce","full_to_off":"0.00","freight_money":"0.00","free_freight_type":3,"instant_rebate_money":"0.00","goods_real_money":"9.58","total_money":"9.58","is_select_detail":1,"good_max_count_toast":"订单商品明细行数超过最大限制，无法按商品明细开票","is_all_check":1,"onion_id":"","onion_tip":{"tip_name_type":0,"tip_name":"赠品小葱已赠完，如有需要可购买小葱","event_track_type":9},"cart_notice":"已免配送费","cart_notice_new":"免配送费","free_freight_notice":{},"cart_top_floor_info":[],"cart_count":2,"total_count":4,"product_num":{"5e721d22b0055a0b5f763edf":1,"614d6cce8f1ed4f0871a2ca9":1,"5e3f82cf7cdbf0131769408b":1,"58ba8c02916edf9e4cc23072":1},"stop_order_toast":"","gift_no_size_tip":"","is_hit_onion":false,"onion_ab_config":3,"is_hit_gift_size":true,"coupon_text_a":"","coupon_text_b":"","need_amount":"","is_vip_ticket":0,"coupon_amount":"","coupon_state":-1,"coupon_type":0,"next_recommend_coupon":{"coupon_text_a":null,"coupon_text_b":null,"need_amount":null,"is_vip_ticket":null,"is_common_ticket":null},"show_coupon_detail":false,"contains_advent_gift":0,"parent_order_info":{"parent_order_sign":"5192235f19162dbe7f1aa1cf749717ba","stockout_gift_product":[],"stockout_gift_text":"赠品赠完即止，不再补送，敬请谅解。","is_open_presale_use_virtual_stock":false},"is_support_merge_payment":1,"sodexo_nonsupport_product_list":[],"valid_product_counts":{"5e721d22b0055a0b5f763edf":1,"5e3f82cf7cdbf0131769408b":1}},"tradeTag":"success","server_time":1649627313,"is_trade":1}
@@ -229,9 +228,7 @@ func (s *Session) CartAllCheck() error {
 
 	req := s.client.R()
 	req.Header = s.buildHeader()
-	startTime := time.Now()
 	_, err = s.execute(context.Background(), req, http.MethodGet, urlPath)
-	fmt.Printf("全选购物车耗时%+v\n", time.Now().Sub(startTime))
 	return err
 }
 
@@ -249,19 +246,21 @@ func (s *Session) GetCart() error {
 
 	req := s.client.R()
 	req.Header = s.buildHeader()
-	startTime := time.Now()
+	//startTime := time.Now()
 	resp, err := s.execute(context.Background(), req, http.MethodGet, urlPath)
-	fmt.Printf("请求购物车耗时%+v\n", time.Now().Sub(startTime))
 	if err != nil {
 		return err
 	}
+	//logrus.Info(fmt.Sprintf("请求购物车耗时%+v", time.Now().Sub(startTime)))
 
 	var productResult ProductResult
 	if err := json.Unmarshal(resp.Body(), &productResult); err != nil {
 		return fmt.Errorf("parse response failed: %v, body: %v", err, resp.String())
 	}
-
 	jsonResult := gjson.ParseBytes(resp.Body())
+	mutex := sync.Mutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
 	s.Cart.ParentOrderSign = jsonResult.Get("data.parent_order_info.parent_order_sign").Str
 	switch s.CartMode {
 	case 1:
@@ -279,5 +278,6 @@ func (s *Session) GetCart() error {
 	default:
 		return fmt.Errorf("incorrect cart mode: %v", s.CartMode)
 	}
+	s.Order.Products = s.Cart.ProdList
 	return nil
 }

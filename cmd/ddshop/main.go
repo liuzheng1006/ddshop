@@ -15,10 +15,9 @@
 package main
 
 import (
-	"os"
-	"time"
-
+	"github.com/spf13/cobra"
 	"github.com/zc2638/ddshop/cmd/ddshop/app"
+	"os"
 
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
@@ -35,21 +34,22 @@ func main() {
 		TimestampFormat:        TimeFormat,
 	})
 	command := app.NewRootCommand()
-	c := cron.New()
-	//_ = c.AddFunc("50 59 5 * * *", func() {
-	if err := command.Execute(); err != nil {
-		os.Exit(1)
-	}
-	//})
-	c.Start()
+	//goNow(command)
+	goWithSchedule(command)
 	select {}
 }
 
-func NextDay(hour, min, second int) time.Duration {
-	n := time.Now()
-	d := time.Date(n.Year(), n.Month(), n.Day(), hour, min, second, 0, n.Location())
-	for !d.After(n) {
-		d = d.AddDate(0, 0, 1)
+func goNow(command *cobra.Command) {
+	if err := command.Execute(); err != nil {
+		os.Exit(1)
 	}
-	return time.Until(d)
+}
+func goWithSchedule(command *cobra.Command) {
+	c := cron.New()
+	_ = c.AddFunc("00 55 5 * * *", func() {
+		if err := command.Execute(); err != nil {
+			os.Exit(1)
+		}
+	})
+	c.Start()
 }
