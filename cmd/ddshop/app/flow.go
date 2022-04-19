@@ -18,11 +18,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zc2638/ddshop/core"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	_payOrderParaNum = 4
 )
 
 var (
@@ -72,23 +75,22 @@ func flow(session *core.Session) error {
 	}
 
 	wg, _ := errgroup.WithContext(context.Background())
-	for _, reserveTime := range multiReserveTime {
-		sess := session.Clone()
-		sess.UpdatePackageOrder(reserveTime)
-		wg.Go(func() error {
-			startTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
-			endTime := time.Unix(int64(sess.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
-			timeRange := startTime + "——" + endTime
-			logrus.Infof("提交订单中, 预约时间段(%s)", timeRange)
-			if err := sess.CreateOrder(context.Background()); err != nil {
-				logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
-				return err
-			}
-			logrus.Warningf("提交订单(%s)成功！", timeRange)
-			successCh <- struct{}{}
-			core.StopDaemonThread = true
-			return nil
-		})
+	for i := 0; i < _payOrderParaNum; i++ {
+		for _, reserveTime := range multiReserveTime {
+			sess := session.Clone()
+			sess.UpdatePackageOrder(reserveTime)
+			wg.Go(func() error {
+				timeRange := session.GetReservedTimeRange()
+				if err := sess.CreateOrder(context.Background()); err != nil {
+					logrus.Warningf("提交订单(%s)失败: %v", timeRange, err)
+					return err
+				}
+				logrus.Warningf("提交订单(%s)成功！", timeRange)
+				successCh <- struct{}{}
+				core.StopDaemonThread = true
+				return nil
+			})
+		}
 	}
 	_ = wg.Wait()
 	return nil

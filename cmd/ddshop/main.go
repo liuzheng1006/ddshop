@@ -34,8 +34,8 @@ func main() {
 		TimestampFormat:        TimeFormat,
 	})
 	command := app.NewRootCommand()
-	//goNow(command)
-	goWithSchedule(command)
+	goNow(command)
+	//goWithSchedule(command)
 	select {}
 }
 

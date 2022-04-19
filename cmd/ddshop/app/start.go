@@ -44,7 +44,7 @@ func NewRootCommand() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&opt.Cookie, "cookie", "", "设置用户个人cookie")
 	cmd.Flags().StringVar(&opt.BarkKey, "bark-key", "", "设置bark的通知key")
-	cmd.Flags().Int64Var(&opt.Interval, "interval", 200, "设置请求间隔时间(ms)")
+	cmd.Flags().Int64Var(&opt.Interval, "interval", 300, "设置请求间隔时间(ms)")
 	return cmd
 }
 
@@ -74,8 +74,8 @@ func start(session *core.Session, opt *Option) {
 				if err := flow(session); err != nil {
 					switch err {
 					case core.ErrorNoValidProduct, core.ErrNoValidFreight, core.ErrorNoReserveTime:
-						logrus.Errorf("%+v，%d 秒后退出！", err.Error(), 10)
-						time.Sleep(10 * time.Second)
+						logrus.Errorf("%+v，%d 秒后退出！", err.Error(), 5)
+						time.Sleep(5 * time.Second)
 						errCh <- err
 						return
 					default:
@@ -94,7 +94,7 @@ func monitor(opt *Option) error {
 	defer ticker.Stop()
 	select {
 	case <-ticker.C:
-		return fmt.Errorf("程序执行%d分钟退出", _programRunTime)
+		return fmt.Errorf("程序执行%d分钟退出", _programRunTime/time.Minute)
 	case err := <-errCh:
 		return err
 	case <-successCh:

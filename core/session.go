@@ -108,6 +108,10 @@ func (s *Session) Clone() *Session {
 
 func (s *Session) execute(ctx context.Context, request *resty.Request, method, url string) (*resty.Response, error) {
 	urlAbbr := strings.Split(url, "/")
+	actionName := urlAbbr[len(urlAbbr)-2] + "/" + strings.Split(urlAbbr[len(urlAbbr)-1], "?")[0]
+	if actionName == "order/addNewOrder" {
+		logrus.Infof("提交订单中, 预约时间段(%s),下单金额(%s)", s.GetReservedTimeRange(), s.Order.Price)
+	}
 	if ctx != nil {
 		request.SetContext(ctx)
 	}
@@ -140,9 +144,14 @@ func (s *Session) execute(ctx context.Context, request *resty.Request, method, u
 		return nil, fmt.Errorf("无法识别的状态码: %v", resp.String())
 	}
 	duration := time.Duration(s.Interval + rand.Int63n(s.Interval/2))
-	logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)(%s)", duration, urlAbbr[len(urlAbbr)-2]+"/"+strings.Split(urlAbbr[len(urlAbbr)-1], "?")[0], resp.String())
+	//logrus.Warningf("将在 %dms 后重试, 当前人多拥挤(%v)(%s)", duration, actionName, resp.String())
 	time.Sleep(duration * time.Millisecond)
 	return s.execute(nil, request, method, url)
+}
+func (s *Session) GetReservedTimeRange() string {
+	startTime := time.Unix(int64(s.PackageOrder.PaymentOrder.ReservedTimeStart), 0).Format("2006/01/02 15:04:05")
+	endTime := time.Unix(int64(s.PackageOrder.PaymentOrder.ReservedTimeEnd), 0).Format("2006/01/02 15:04:05")
+	return startTime + "——" + endTime
 }
 
 func (s *Session) buildHeader() http.Header {
