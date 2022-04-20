@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	_payOrderParaNum = 4
+	_payOrderParaNum = 2
 )
 
 var (

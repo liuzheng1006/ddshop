@@ -50,7 +50,10 @@ func LoopRun(num int, f func()) {
 }
 
 func WaitStart() {
-	for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 5, 59, 59, 899999999, n.Location())); n = time.Now() {
+	for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 5, 59, 59, 989999999, n.Location())); n = time.Now() {
 		time.Sleep(1 * time.Microsecond)
 	}
+	//for n := time.Now(); n.Before(time.Date(n.Year(), n.Month(), n.Day(), 8, 29, 29, 989999999, n.Location())); n = time.Now() {
+	//	time.Sleep(1 * time.Microsecond)
+	//}
 }

@@ -15,12 +15,12 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/zc2638/ddshop/cmd/ddshop/app"
 	"os"
 
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/zc2638/ddshop/cmd/ddshop/app"
 )
 
 const TimeFormat = "2006/01/02 15:04:05"
@@ -35,7 +35,8 @@ func main() {
 	})
 	command := app.NewRootCommand()
 	goNow(command)
-	//goWithSchedule(command)
+	//goWithSchedule6(command)
+	//goWithSchedule8(command)
 	select {}
 }
 
@@ -44,9 +45,18 @@ func goNow(command *cobra.Command) {
 		os.Exit(1)
 	}
 }
-func goWithSchedule(command *cobra.Command) {
+func goWithSchedule6(command *cobra.Command) {
 	c := cron.New()
-	_ = c.AddFunc("00 55 5 * * *", func() {
+	_ = c.AddFunc("00 55 6 * * *", func() {
+		if err := command.Execute(); err != nil {
+			os.Exit(1)
+		}
+	})
+	c.Start()
+}
+func goWithSchedule8(command *cobra.Command) {
+	c := cron.New()
+	_ = c.AddFunc("00 25 8 * * *", func() {
 		if err := command.Execute(); err != nil {
 			os.Exit(1)
 		}
